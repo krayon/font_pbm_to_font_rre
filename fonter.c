@@ -1,5 +1,14 @@
 //Confusing tool to turn .pbm fonts into compressed RREs for RFB
 
+// Some improvements by cbm80amiga:
+// - got rid of getline() function
+// - code can be now compiled using TCC on Win machines
+// - got rid of cw divisible by 8 limitation
+// - added 24bit/rect mode for 64x64 pixels fonts
+// - more debug information
+// - decreased/improved rectangle overlapping
+// - added ascii only font bitmap support (range 0x20-0x7f only - 6 lines of 16 chars)
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -9,7 +18,9 @@
 #define ECHARS 256
 #define MAX_RECTS_PER_CHAR 100
 
-#define DOUBLEPACK
+int lessOverlap = 1;
+int mode24b = 0;
+int asciiOnly = 0;
 
 int cw, ch;
 int w, h;
@@ -22,9 +33,9 @@ struct MRect
 };
 
 int ReadFile( const char * rn );
-void DumpBuffer( uint8_t * dat, int len, char * name )
-{
 
+void DumpBuffer8( uint8_t * dat, int len, char * name )
+{
 	printf( "const unsigned char %s[%d] = {", name, len );
 	int i;
 	for( i = 0; i < len; i++ )
@@ -37,9 +48,9 @@ void DumpBuffer( uint8_t * dat, int len, char * name )
 	}
 	printf( "\n};\n\n" );
 }
+
 void DumpBuffer16( uint16_t * dat, int len, char * name )
 {
-
 	printf( "const unsigned short %s[%d] = {", name, len );
 	int i;
 	for( i = 0; i < len; i++ )
@@ -81,6 +92,14 @@ void DoCover( uint8_t * ibuff, struct MRect * r )
 	}
 }
 
+void Fill( uint8_t * ibuff, struct MRect * r, int val )
+{
+	int x, y;
+	int count = 0;
+	for( y = r->y; y < r->y+r->h; y++ )
+		for( x = r->x; x < r->x+r->w; x++ )
+			ibuff[x+y*cw] = val;
+}
 
 int Covers( uint8_t * ibuff, struct MRect * rs )
 {
@@ -96,12 +115,11 @@ int Covers( uint8_t * ibuff, struct MRect * rs )
 		for( h = 1; h <= ch-y; h++ )
 		for( w = 1; w <= cw-x; w++ )
 		{
-#ifdef DOUBLEPACK
-			if( w > 16 || h > 16 || x > 16 || y > 16 ) continue;
-#endif
+			if( !mode24b && (w > 16 || h > 16 || x > 16 || y > 16) ) continue;
+			if( mode24b && (w > 64 || h > 64 || x > 64 || y > 64 )) continue;
 			tmp.x = x; tmp.y = y; tmp.w = w; tmp.h = h;
 			int ct = TryCover( ibuff, &tmp );
-			if( ct > most_efficient_count )
+			if( ct > most_efficient_count || (lessOverlap && ct==most_efficient_count && tmp.w*tmp.h<most_efficient.w*most_efficient.h) )
 			{
 				memcpy( &most_efficient, &tmp, sizeof( tmp ) );
 				most_efficient_count = ct;
@@ -110,7 +128,7 @@ int Covers( uint8_t * ibuff, struct MRect * rs )
 
 		if( most_efficient_count == 0 )
 		{
-			return i;
+					return i;
 		}
 
 		DoCover( ibuff, &most_efficient );
@@ -124,8 +142,9 @@ int GreedyChar( int chr, int debug, struct MRect * RectSet )
 {
 	int x, y, i;
 	uint8_t cbuff[ch*cw];
+	uint8_t rbuff[ch*cw];
 	int rectcount;
-
+/*
 	for( y = 0; y < ch; y++ )
 	for( x = 0; x < cw/8; x++ )
 	{
@@ -140,35 +159,53 @@ int GreedyChar( int chr, int debug, struct MRect * RectSet )
 			cbuff[x*8+y*cw+i] = (inpos&(1<<(7-i)))?0:1;
 		}
 	}
-
+	*/
+	for( i = 0; i < ch*cw; i++ ) cbuff[i] = rbuff[i] = 0;
+	int chrOffs = 0;
+	if(asciiOnly) chrOffs=32;
+	if(!asciiOnly || (asciiOnly && chr>=32 && chr<128))
+		for( y = 0; y < ch; y++ )
+		for( x = 0; x < cw; x++ )
+		{
+			int ppcx = w/cw;
+			int xpos = ((chr-chrOffs) % ppcx)*cw;
+			int ypos = ((chr-chrOffs) / ppcx)*ch;	
+			int idx = ((ypos+y)*w+xpos+x)/8;
+			int xbit = (xpos+x)&7;
+	        cbuff[x+y*cw] = (buff[idx]&(1<<(7-xbit)))?0:1;
+	    }
+	  
 
 	//Greedily find the minimum # of rectangles that can cover this.
 	rectcount = Covers( cbuff, RectSet );
 
-	if( debug )
-	{
-		printf( "Char %d:\n", chr );
-		for( i = 0; i < rectcount; i++ )
-		{
-			printf( "  %d %d %d %d\n", RectSet[i].x, RectSet[i].y, RectSet[i].w, RectSet[i].h );
+
+	if( debug )	{
+		int numRectPixels = 0;
+		int numPixels = 0;
+		for( i = 0; i < rectcount; i++ ) {
+			numRectPixels+=RectSet[i].w*RectSet[i].h;
+			Fill(rbuff,&RectSet[i],i+1);
 		}
+		for( i = 0; i < ch*cw; i++ ) if(rbuff[i]>0) numPixels++;
+    	printf( "----------------\nChar 0x%02x '%c' %d rects, %d pixels (%d overlapping) \n", chr, chr<32?'.':chr, rectcount, numRectPixels, numRectPixels-numPixels);
+		for( i = 0; i < rectcount; i++ )
+			printf( " %2d %2d %2d %2d   [%c]\n", RectSet[i].x, RectSet[i].y, RectSet[i].w, RectSet[i].h, i<9?i+'1':i+'A'-9);
 		printf( "\n" );
 
-		//Print a char for test.
-		printf( "%d\n", ch );
 		for( y = 0; y < ch; y++ )
 		{
 			for( x = 0; x < cw; x++ )
-			{
 				printf( "%d", cbuff[x+y*cw] );
-			}
+			printf( "    " );
+			for( x = 0; x < cw; x++ )
+				printf( "%c", rbuff[x+y*cw]<10?rbuff[x+y*cw]+'0':rbuff[x+y*cw]+'A'-10 );
 			printf( "\n" );
 		}
 	}
 
 	return rectcount;
 }
-
 
 int main( int argc, char ** argv )
 {
@@ -191,10 +228,15 @@ int main( int argc, char ** argv )
 	printf( "#define FONT_CHAR_W %d\n", cw );
 	printf( "#define FONT_CHAR_H %d\n\n", ch );
 
-	if( ( cw % 8 ) != 0 )
-	{
-		fprintf( stderr, "Error: CW MUST be divisible by 8.\n" );
-	}
+	if(cw>16 || ch>16) mode24b = 1; else mode24b = 0;
+	printf("mode24=%d\n",mode24b);
+	if((w/cw) * (h/ch) < 256) asciiOnly = 1; else asciiOnly = 0;
+	printf("asciiOnly=%d\n",asciiOnly);
+
+// 	if( ( cw % 8 ) != 0 )
+// 	{
+// 		fprintf( stderr, "Error: CW MUST be divisible by 8.\n" );
+// 	}
 
 //	struct MRect MRect rs;
 //	GreedyChar( 0xdc, 1, &rs );
@@ -203,44 +245,53 @@ int main( int argc, char ** argv )
 	uint16_t places[ECHARS+1];
 	int place = 0;
 	for( i = 0; i < ECHARS; i++ )
+	//i = 'H';
 	{
 		places[i] = place;
-		place += GreedyChar( i, 0, &MRects[place] );
+		place += GreedyChar( i, 1, &MRects[place] );
 	}
 	places[i] = place;
 
-	uint16_t outbuffer[ECHARS*MAX_RECTS_PER_CHAR*2];
+	uint8_t outbuffer[ECHARS*MAX_RECTS_PER_CHAR*2*3];
 	for( i = 0; i < place; i++ )
 	{
 		int x = MRects[i].x;
 		int y = MRects[i].y;
 		int w = MRects[i].w;
 		int h = MRects[i].h;
-		if( w == 0 || w > 16 ) { fprintf( stderr, "Error: invalid W value\n" ); return -5; }
-		if( h == 0 || h > 16 ) { fprintf( stderr, "Error: invalid H value\n" ); return -5; }
-		if( x > 15 ) { fprintf( stderr, "Error: invalid X value\n" ); return -5; }
-		if( y > 15 ) { fprintf( stderr, "Error: invalid Y value\n" ); return -5; }
+		if( w == 0 || w > 64 ) { fprintf( stderr, "Error: invalid W value\n" ); return -5; }
+		if( h == 0 || h > 64 ) { fprintf( stderr, "Error: invalid H value\n" ); return -5; }
+		if( x > 63 ) { fprintf( stderr, "Error: invalid X value\n" ); return -5; }
+		if( y > 63 ) { fprintf( stderr, "Error: invalid Y value\n" ); return -5; }
 		w--;
 		h--;
-		outbuffer[i] = x | (y<<4) | (w<<8) | (h<<12);
+		if(!mode24b)
+			((uint16_t*)outbuffer)[i] = x | (y<<4) | (w<<8) | (h<<12);
+		else {
+			outbuffer[i*3+0] = x | ((h<<6) & 0xc0);
+			outbuffer[i*3+1] = y | ((h<<4) & 0xc0);
+			outbuffer[i*3+2] = w | ((h<<2) & 0xc0);
+		}
 	}
 
 	fprintf( stderr, "Total places: %d\n", place );
-	DumpBuffer16( outbuffer, place, "font_pieces" );
-	DumpBuffer16( places, ECHARS+1, "font_places" );
+	printf( "#ifndef __font__h__\n" );
+	printf( "#define __font__h__\n\n" );
+	if(!mode24b)
+		DumpBuffer16( (uint16_t*)outbuffer, place, "font_Rects" );
+	else
+		DumpBuffer8( outbuffer, place*3, "font_Rects" );
+	DumpBuffer16( places, ECHARS+1, "font_CharOffs" );
+	printf( "#endif\n" );
 
 	return 0;
 }
-
-
-
 
 
 int ReadFile( const char * rn )
 {
 	int r;
 	char ct[1024];
-	char * cct;
 	FILE * f = fopen( rn, "r" );
 
 	if( !f )
@@ -255,22 +306,15 @@ int ReadFile( const char * rn )
 		return -2;
 	}
 
-	size_t sizin = 0;
-	cct = 0;
-	ssize_t s = getline( &cct, &sizin, f );
-
-	if( !cct || cct[0] != '#' )
-	{
-		fprintf( stderr, "Error: Need a comment line.\n" );
-		return -3;
-	}
-	free( cct );
-
+    char c = fgetc(f);
+    while(c!=10 && !feof(f)) c=fgetc(f);
+    
 	if( (r = fscanf( f, "%d %d\n", &w, &h )) != 2 || w <= 0 || h <= 0 )
 	{
 		fprintf( stderr, "Error: Need w and h in pbm file.  Got %d params.  (%d %d)\n", r, w, h );
 		return -4;
 	}
+    printf("PBM: %dx%d\n",w,h);
 
 	bytes = (w*h)>>3;
 	buff = malloc( bytes );
