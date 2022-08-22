@@ -8,6 +8,8 @@
 // - more debug information
 // - decreased/improved rectangle overlapping
 // - added ascii only font bitmap support (range 0x20-0x7f only - 6 lines of 16 chars)
+// Some improvements by krayon:
+// - added support for other common bitmap font formats (such as 8 lines of 16 chars)
 
 #include <stdio.h>
 #include <stdint.h>
@@ -20,7 +22,9 @@
 
 int lessOverlap = 1;
 int mode24b = 0;
-int asciiOnly = 0;
+
+int n_chrs     = 0;
+int chr_offset = 0;
 
 int cw, ch;
 int w, h;
@@ -116,7 +120,7 @@ int Covers( uint8_t * ibuff, struct MRect * rs )
 		for( w = 1; w <= cw-x; w++ )
 		{
 			if( !mode24b && (w > 16 || h > 16 || x > 16 || y > 16) ) continue;
-			if( mode24b && (w > 64 || h > 64 || x > 64 || y > 64 )) continue;
+			if(  mode24b && (w > 64 || h > 64 || x > 64 || y > 64 )) continue;
 			tmp.x = x; tmp.y = y; tmp.w = w; tmp.h = h;
 			int ct = TryCover( ibuff, &tmp );
 			if( ct > most_efficient_count || (lessOverlap && ct==most_efficient_count && tmp.w*tmp.h<most_efficient.w*most_efficient.h) )
@@ -161,9 +165,7 @@ int GreedyChar( int chr, int debug, struct MRect * RectSet )
 	}
 	*/
 	for( i = 0; i < ch*cw; i++ ) cbuff[i] = rbuff[i] = 0;
-	int chr_offset = 0;
-	if(asciiOnly) chr_offset=32;
-	if(!asciiOnly || (asciiOnly && chr>=32 && chr<128))
+	if (chr < n_chrs)
 		for( y = 0; y < ch; y++ )
 		for( x = 0; x < cw; x++ )
 		{
@@ -178,7 +180,6 @@ int GreedyChar( int chr, int debug, struct MRect * RectSet )
 
 	//Greedily find the minimum # of rectangles that can cover this.
 	rectcount = Covers( cbuff, RectSet );
-
 
 	if( debug ) {
 		int numRectPixels = 0;
@@ -230,8 +231,9 @@ int main( int argc, char ** argv )
 
 	if(cw>16 || ch>16) mode24b = 1; else mode24b = 0;
 	printf("mode24=%d\n",mode24b);
-	if((w/cw) * (h/ch) < 256) asciiOnly = 1; else asciiOnly = 0;
-	printf("asciiOnly=%d\n",asciiOnly);
+	n_chrs = (w/cw) * (h/ch);
+	if (n_chrs >= MAX_CHARS) n_chrs = MAX_CHARS;
+	if (n_chrs <= (16 * 6)) chr_offset = 32;
 
 // 	if( ( cw % 8 ) != 0 )
 // 	{
@@ -244,7 +246,7 @@ int main( int argc, char ** argv )
 	struct MRect MRects[MAX_CHARS*MAX_RECTS_PER_CHAR];
 	uint16_t places[MAX_CHARS+1];
 	int place = 0;
-	for( i = 0; i < MAX_CHARS; i++ )
+	for( i = 0; i < n_chrs; i++ )
 	//i = 'H';
 	{
 		places[i] = place;
@@ -305,15 +307,15 @@ int ReadFile( const char * rn )
 		return -2;
 	}
 
-    char c = fgetc(f);
-    while(c!=10 && c!=13 && !feof(f)) c=fgetc(f);
+	char c = fgetc(f);
+	while(c!=10 && c!=13 && !feof(f)) c=fgetc(f);
 
 	if( (r = fscanf( f, "%d %d\n", &w, &h )) != 2 || w <= 0 || h <= 0 )
 	{
 		fprintf( stderr, "Error: Need w and h in pbm file.  Got %d params.  (%d %d)\n", r, w, h );
 		return -4;
 	}
-    printf("PBM: %dx%d\n",w,h);
+	printf("PBM: %dx%d\n",w,h);
 
 	bytes = (w*h)>>3;
 	buff = malloc( bytes );
