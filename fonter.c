@@ -301,14 +301,27 @@ int ReadFile( const char * rn )
 		return -11;
 	}
 
-	if( fscanf( f, "%1023s", ct ) != 1 || strcmp( ct, "P4" ) != 0 )
+	if( fscanf( f, "%1023s\n", ct ) != 1 || strcmp( ct, "P4" ) != 0 )
 	{
 		fprintf( stderr, "Error: Expected P4 header.\n" );
 		return -2;
 	}
 
 	char c = fgetc(f);
-	while(c!=10 && c!=13 && !feof(f)) c=fgetc(f);
+	do {
+		// Skip blank lines
+		while((c==10 || c==13) && !feof(f)) c=fgetc(f);
+
+		// Skip comments
+		while (c == '#') {
+			// Skip to end of line
+			while(c!=10 && c!=13 && !feof(f)) c=fgetc(f);
+
+		}
+	} while(c==10 || c==13);
+
+	// Seek back one byte
+	fseek(f, -1, SEEK_CUR);
 
 	if( (r = fscanf( f, "%d %d\n", &w, &h )) != 2 || w <= 0 || h <= 0 )
 	{
