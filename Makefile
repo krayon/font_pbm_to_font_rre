@@ -1,24 +1,15 @@
-all : fonter fps
-
-OBJS:=cnrfb.c linux_interface.c heap.c
+all : fonter
 
 MAKE_TINY_x86_64:=-Os -s -flto -Wl,--relax -Wl,-Map=test.map -Wl,--gc-sections -ffunction-sections -fdata-sections -T./elf_x86_64_mod.x
-
-fps : fps.c $(OBJS) font.h mathtables.h
-	gcc $(OBJS) $< mathfuncts.c -o $@  $(MAKE_TINY_x86_64)
 
 fonter : fonter.o
 	gcc $(MAKE_TINY_x86_64) -o $@ $^
 
-mathtables.h : tabler.c
-	gcc $(MAKE_TINY_x86_64) -o tabler tabler.c -lm
-	./tabler > mathtables.h
-
-fonter.h : fonter vga8x12.pbm
-	./fonter vga8x12.pbm 8 16 > fonter.h
+vga8x12.font.h : fonter vga8x12.pbm
+	./fonter vga8x12.pbm 8 16 > vga8x12.font.h
 
 clean :
-	rm -rf fonter cnrfb *.o *~ fps tabler
+	rm -rf fonter *.o *~
 
 wipe : clean
-	rm -rf mathtables.h fonter.h
+	rm -rf vga8x12.font.h
