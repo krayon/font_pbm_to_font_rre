@@ -15,7 +15,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define ECHARS 256
+#define MAX_CHARS 256
 #define MAX_RECTS_PER_CHAR 100
 
 int lessOverlap = 1;
@@ -161,15 +161,15 @@ int GreedyChar( int chr, int debug, struct MRect * RectSet )
 	}
 	*/
 	for( i = 0; i < ch*cw; i++ ) cbuff[i] = rbuff[i] = 0;
-	int chrOffs = 0;
-	if(asciiOnly) chrOffs=32;
+	int chr_offset = 0;
+	if(asciiOnly) chr_offset=32;
 	if(!asciiOnly || (asciiOnly && chr>=32 && chr<128))
 		for( y = 0; y < ch; y++ )
 		for( x = 0; x < cw; x++ )
 		{
 			int ppcx = w/cw;
-			int xpos = ((chr-chrOffs) % ppcx)*cw;
-			int ypos = ((chr-chrOffs) / ppcx)*ch;
+			int xpos = ((chr - chr_offset) % ppcx)*cw;
+			int ypos = ((chr - chr_offset) / ppcx)*ch;
 			int idx = ((ypos+y)*w+xpos+x)/8;
 			int xbit = (xpos+x)&7;
 	        cbuff[x+y*cw] = (buff[idx]&(1<<(7-xbit)))?0:1;
@@ -241,10 +241,10 @@ int main( int argc, char ** argv )
 //	struct MRect MRect rs;
 //	GreedyChar( 0xdc, 1, &rs );
 
-	struct MRect MRects[ECHARS*MAX_RECTS_PER_CHAR];
-	uint16_t places[ECHARS+1];
+	struct MRect MRects[MAX_CHARS*MAX_RECTS_PER_CHAR];
+	uint16_t places[MAX_CHARS+1];
 	int place = 0;
-	for( i = 0; i < ECHARS; i++ )
+	for( i = 0; i < MAX_CHARS; i++ )
 	//i = 'H';
 	{
 		places[i] = place;
@@ -252,7 +252,7 @@ int main( int argc, char ** argv )
 	}
 	places[i] = place;
 
-	uint8_t outbuffer[ECHARS*MAX_RECTS_PER_CHAR*2*3];
+	uint8_t outbuffer[MAX_CHARS*MAX_RECTS_PER_CHAR*2*3];
 	for( i = 0; i < place; i++ )
 	{
 		int x = MRects[i].x;
@@ -281,7 +281,7 @@ int main( int argc, char ** argv )
 		DumpBuffer16( (uint16_t*)outbuffer, place, "font_Rects" );
 	else
 		DumpBuffer8( outbuffer, place*3, "font_Rects" );
-	DumpBuffer16( places, ECHARS+1, "font_CharOffs" );
+	DumpBuffer16( places, MAX_CHARS+1, "font_CharOffs" );
 	printf( "#endif\n" );
 
 	return 0;
