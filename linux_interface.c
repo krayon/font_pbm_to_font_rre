@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include "cnrfb.h"
-
+#include "fps.h"
 
 #define MAX_SOCKETS 10
 

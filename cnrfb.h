@@ -1,8 +1,6 @@
 #ifndef _CNRFB_H
 #define _CNRFB_H
 
-
-
 #include <stdint.h>
 
 #define MAX_RFB_CONNS 8
@@ -24,6 +22,7 @@
 
 // TCP/IP Interface (You must provide this)
 
+void CNRFBInit();
 int  CNRFBNewConnection( ); //If returns negative, indicates failure.
 void CNRFBGotData( int conn, int recvqty );
 void CNRFBConnectionWasClosed( int conn );
@@ -89,5 +88,3 @@ void PrintText( const char * text, uint8_t fg, uint8_t bg, uint16_t border, uint
 void EndFrameDraw(int conn);
 
 #endif
-
-

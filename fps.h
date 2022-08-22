@@ -81,6 +81,10 @@ extern uint8_t gtickcount;
 extern uint16_t gameover;
 extern uint8_t  pylons_remaining;
 
+void DisconnectEvent( int conn );
+void ConnectEvent( int c );
+void UpdateEvent( int slowtick );
+void ToolStart();
 
 #endif
 
