@@ -1,6 +1,6 @@
 # Font PBM to Font RRE converter
 
-Converter from PBM font to RRE format.
+Tool to convert PBM bitmap fonts to RRE rectangle font format.
 
 Taken from for [cbm80amiga's fork](https://github.com/cbm80amiga/pylotron) of
 [cnlohr's pylotron project](https://github.com/cnlohr/pylotron) with
