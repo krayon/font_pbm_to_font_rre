@@ -18,7 +18,7 @@ uint8_t ServerInit[] = {
 	1, //True color?
 	//Color is RRRGGGBB
 	0, 7, 0, 7, 0, 3,
-	0, 3, 6, 0, 0, 0, 
+	0, 3, 6, 0, 0, 0,
 };
 
 int  CNRFBNewConnection( )
@@ -249,7 +249,7 @@ void CNRFBTick( int slow_tick )
 						CNRFBSend2( ((color>>6) & 0x03)<<(6+8) );
 					}
 					CNRFBEndSend();
-					c->need_to_send_colormap |= 2; ///Really weird logic to make it possible to re-send the color map mid-way through the colormap.
+					c->need_to_send_colormap |= 2; //Really weird logic to make it possible to re-send the color map mid-way through the colormap.
 					c->need_to_send_colormap &= 2;
 				}
 				else if( (c->need_to_send_colormap & 2) == 2 )
@@ -278,7 +278,6 @@ void CNRFBTick( int slow_tick )
 
 }
 
-
 //17 bytes each.
 void DrawRect( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t color )
 {
@@ -300,7 +299,6 @@ void DrawRectAtAsPartOfRRE( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint
 	CNRFBSend2( h );
 }
 
-
 int StartFrameDraw( int conn, int nrdr )
 {
 	if( !CNRFBCanSendData( conn ) ) return -1;
@@ -311,7 +309,6 @@ int StartFrameDraw( int conn, int nrdr )
 	CNRFBSend2( nrdr );
 	return 0;
 }
-
 
 void StartRRE( int qty, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t bg )
 {
@@ -377,10 +374,8 @@ void PrintText( const char * text, uint8_t fg, uint8_t bg, uint16_t border, uint
 	}
 }
 
-
 void EndFrameDraw(int conn)
 {
 	CNRFBs[conn].update_requested = 0;
 	CNRFBEndSend();
 }
-

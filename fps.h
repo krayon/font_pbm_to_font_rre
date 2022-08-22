@@ -15,7 +15,6 @@
 #define FOV (30*256)
 #define SLACKTIMING 10
 
-
 //A totally incomplete FPS demo.
 
 #define KEY_TURN_LEFT 0
@@ -65,7 +64,7 @@ extern const uint8_t keymap[];
 
 struct Thing //10 bytes
 {
-	uint8_t player_associated; 
+	uint8_t player_associated;
 	int16_t x, y;
 	int8_t  dirx, diry;
 	int16_t size; //if 0, inactive.
@@ -87,4 +86,3 @@ void UpdateEvent( int slowtick );
 void ToolStart();
 
 #endif
-

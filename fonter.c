@@ -43,7 +43,7 @@ void DumpBuffer8( uint8_t * dat, int len, char * name )
 		if( (i%16) == 0 )
 		{
 			printf( "\n\t" );
-		}	
+		}
 		printf( "0x%02x, ", dat[i] );
 	}
 	printf( "\n};\n\n" );
@@ -58,7 +58,7 @@ void DumpBuffer16( uint16_t * dat, int len, char * name )
 		if( (i%16) == 0 )
 		{
 			printf( "\n\t" );
-		}	
+		}
 		printf( "0x%04x, ", dat[i] );
 	}
 	printf( "\n};\n\n" );
@@ -150,7 +150,7 @@ int GreedyChar( int chr, int debug, struct MRect * RectSet )
 	{
 		int ppcx = w/cw;
 		int xpos = (chr % ppcx)*cw;
-		int ypos = (chr / ppcx)*ch;	
+		int ypos = (chr / ppcx)*ch;
 		int idx = xpos/8+(ypos+y)*w/8+x;
 		int inpos = buff[idx];
 
@@ -169,18 +169,18 @@ int GreedyChar( int chr, int debug, struct MRect * RectSet )
 		{
 			int ppcx = w/cw;
 			int xpos = ((chr-chrOffs) % ppcx)*cw;
-			int ypos = ((chr-chrOffs) / ppcx)*ch;	
+			int ypos = ((chr-chrOffs) / ppcx)*ch;
 			int idx = ((ypos+y)*w+xpos+x)/8;
 			int xbit = (xpos+x)&7;
 	        cbuff[x+y*cw] = (buff[idx]&(1<<(7-xbit)))?0:1;
 	    }
-	  
+
 
 	//Greedily find the minimum # of rectangles that can cover this.
 	rectcount = Covers( cbuff, RectSet );
 
 
-	if( debug )	{
+	if( debug ) {
 		int numRectPixels = 0;
 		int numPixels = 0;
 		for( i = 0; i < rectcount; i++ ) {
@@ -188,7 +188,7 @@ int GreedyChar( int chr, int debug, struct MRect * RectSet )
 			Fill(rbuff,&RectSet[i],i+1);
 		}
 		for( i = 0; i < ch*cw; i++ ) if(rbuff[i]>0) numPixels++;
-    	printf( "----------------\nChar 0x%02x '%c' %d rects, %d pixels (%d overlapping) \n", chr, chr<32?'.':chr, rectcount, numRectPixels, numRectPixels-numPixels);
+		printf( "----------------\nChar 0x%02x '%c' %d rects, %d pixels (%d overlapping) \n", chr, chr<32?'.':chr, rectcount, numRectPixels, numRectPixels-numPixels);
 		for( i = 0; i < rectcount; i++ )
 			printf( " %2d %2d %2d %2d   [%c]\n", RectSet[i].x, RectSet[i].y, RectSet[i].w, RectSet[i].h, i<9?i+'1':i+'A'-9);
 		printf( "\n" );
@@ -287,7 +287,6 @@ int main( int argc, char ** argv )
 	return 0;
 }
 
-
 int ReadFile( const char * rn )
 {
 	int r;
@@ -308,7 +307,7 @@ int ReadFile( const char * rn )
 
     char c = fgetc(f);
     while(c!=10 && !feof(f)) c=fgetc(f);
-    
+
 	if( (r = fscanf( f, "%d %d\n", &w, &h )) != 2 || w <= 0 || h <= 0 )
 	{
 		fprintf( stderr, "Error: Need w and h in pbm file.  Got %d params.  (%d %d)\n", r, w, h );
@@ -318,7 +317,7 @@ int ReadFile( const char * rn )
 
 	bytes = (w*h)>>3;
 	buff = malloc( bytes );
-	r = fread( buff, 1, bytes, f ); 
+	r = fread( buff, 1, bytes, f );
 	if( r != bytes )
 	{
 		fprintf( stderr, "Error: Ran into EOF when reading file.  (%d)\n",r  );

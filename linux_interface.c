@@ -96,14 +96,12 @@ void CNRFBEndSend( )
 	}
 }
 
-
 void CNRFBCloseConnection( int conn )
 {
 	DisconnectEvent( conn );
 	close( sockets[conn] );
 	sockets[conn] = -1;
 }
-
 
 int     CNRFBReadRemain()
 {
@@ -135,7 +133,6 @@ uint32_t CNRFBRead4()
 	r = (r<<8) | readbuffer[readbufferpos++];
 	return r;
 }
-
 
 int main()
 {
@@ -176,7 +173,7 @@ int main()
 		return -1;
 	}
 
-	setsockopt( serversocket, SOL_SOCKET, SO_LINGER,(void*)(&lin), sizeof(lin) );  
+	setsockopt( serversocket, SOL_SOCKET, SO_LINGER,(void*)(&lin), sizeof(lin) );
 
 	CNRFBInit();
 
@@ -204,7 +201,7 @@ int main()
 		{
 			int foundsocketspot;
 			int clientsocket = accept( serversocket, 0, 0 );
-			setsockopt( clientsocket, SOL_SOCKET, SO_LINGER,(void*)(&lin), sizeof(lin) );  
+			setsockopt( clientsocket, SOL_SOCKET, SO_LINGER,(void*)(&lin), sizeof(lin) );
 
 			if( clientsocket > 0 )
 			{
@@ -275,5 +272,3 @@ int main()
 	}
 	return 0;
 }
-
-

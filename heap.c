@@ -1,6 +1,5 @@
 #include "heap.h"
 
-
 uint8_t HeapRemove( uint8_t * heapdata, uint8_t * heaplen, uint16_t * heapvals )
 {
 	uint8_t ret = heapdata[0];
@@ -32,7 +31,6 @@ uint8_t HeapRemove( uint8_t * heapdata, uint8_t * heaplen, uint16_t * heapvals )
 	return ret;
 }
 
-
 void HeapAdd( uint8_t * heapdata, uint8_t * heaplen, uint8_t data, uint16_t * heapvals )
 {
 	heapdata[*heaplen] = data;
@@ -52,5 +50,3 @@ void HeapAdd( uint8_t * heapdata, uint8_t * heaplen, uint8_t data, uint16_t * he
 
 	(*heaplen)++;
 }
-
-

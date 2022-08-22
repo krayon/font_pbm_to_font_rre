@@ -4,7 +4,7 @@ OBJS:=cnrfb.c linux_interface.c heap.c
 
 MAKE_TINY_x86_64:=-Os -s -flto -Wl,--relax -Wl,-Map=test.map -Wl,--gc-sections -ffunction-sections -fdata-sections -T./elf_x86_64_mod.x
 
-fps : fps.c $(OBJS) font.h mathtables.h 
+fps : fps.c $(OBJS) font.h mathtables.h
 	gcc $(OBJS) $< mathfuncts.c -o $@  $(MAKE_TINY_x86_64)
 
 fonter : fonter.o
@@ -22,5 +22,3 @@ clean :
 
 wipe : clean
 	rm -rf mathtables.h fonter.h
-
-

@@ -22,7 +22,6 @@ uint8_t gtickcount = 0;
 uint16_t gameover = 0;
 uint8_t  pylons_remaining = 0;
 
-
 static uint32_t GetRandomPos( uint8_t i )
 {
 	return ((i*1000004249)^0xA48C4B19)&0x1fff1fff;
@@ -136,7 +135,7 @@ void FreeFrameForClient( int conn )
 			if( top > RFB_HEIGHT-16 ) top = RFB_HEIGHT-16;
 			if( top+siz > RFB_HEIGHT-16 ) siz = RFB_HEIGHT-16-top;
 			if( siz < 0 ) siz = 0;
-			DrawRectAtAsPartOfRRE( l, top, r-l, siz, color );		
+			DrawRectAtAsPartOfRRE( l, top, r-l, siz, color );
 		}
 		//Sight dot.
 		DrawRectAtAsPartOfRRE( RFB_WIDTH/2-2, RFB_HEIGHT/2-2, 4, 4, 0x0f );
@@ -197,14 +196,13 @@ void EmitBoolet( int client, int size )
 	t->player_associated = client;
 }
 
-
 void GotKeyPress( int client, int key, int down )
 {
 	struct FPS * f = &FPSs[client];
 	int i;
 
 	if( gameover ) return;
-	
+
 
 	if( key == '/' ) key = 227; //xxx hack make space also be control.
 
@@ -236,7 +234,6 @@ void GotClipboard( int client, int length, unsigned char * st )
 //	printf( "%d   %d:%s\n", client, length, st );
 }
 
-
 void ToolStart()
 {
 	int i;
@@ -249,7 +246,6 @@ void DisconnectEvent( int conn )
 	FPSs[conn].in_use = 0;
 	PlayerPoints[conn] = 0;
 }
-
 
 void RespawnPlayer( int c )
 {
@@ -296,7 +292,7 @@ void HitPylon( int pylon, int boolet )
 	if( ph < 128 )
 	{
 		FPSs[b->player_associated].boolets += 100;
-		PlayerPoints[b->player_associated] += 50;	
+		PlayerPoints[b->player_associated] += 50;
 	}
 	else
 	{
@@ -323,7 +319,7 @@ void HitPlayer( int player_hit, int boolet )
 
 		if( PlayerPoints[player_hit] > 10 )
 			PlayerPoints[player_hit] = 0;
-		else 
+		else
 			PlayerPoints[player_hit] -= 100;
 
 		PlayerPoints[t->player_associated] += 100;
@@ -512,6 +508,4 @@ void UpdateEvent( int slowtick )
 		if( PylonHealths[i] < 128 && PylonHealths[i] )
 			PylonHealths[i]--;
 	}
-
 }
-

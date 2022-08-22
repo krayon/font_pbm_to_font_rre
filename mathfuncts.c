@@ -81,4 +81,3 @@ unsigned short tasqrt( unsigned long n )
     }
     return res;
 }
-
