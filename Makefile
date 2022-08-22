@@ -14,13 +14,13 @@ mathtables.h : tabler.c
 	gcc $(MAKE_TINY_x86_64) -o tabler tabler.c -lm
 	./tabler > mathtables.h
 
-font.h : fonter vga8x12.pbm
-	./fonter vga8x12.pbm 8 16 > font.h
+fonter.h : fonter vga8x12.pbm
+	./fonter vga8x12.pbm 8 16 > fonter.h
 
 clean :
 	rm -rf fonter cnrfb *.o *~ fps tabler
 
 wipe : clean
-	rm -rf mathtables.h font.h
+	rm -rf mathtables.h fonter.h
 
 
